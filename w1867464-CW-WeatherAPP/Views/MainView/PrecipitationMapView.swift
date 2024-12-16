@@ -6,13 +6,28 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct PrecipitationMapView: View {
+    @Binding var region: MKCoordinateRegion
+    var isDaytime: Bool
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack(alignment: .leading) {
+            HStack {
+                Image(systemName: "umbrella.fill")
+                Text("PRECIPITATION")
+            }
+            .opacity(0.6)
+            Map(coordinateRegion: $region, interactionModes: .zoom)
+                .frame(height: 200)
+                .cornerRadius(10)
+        }
+        .foregroundColor(.white)
+        .padding()
+        .background(isDaytime ? Color.blue.opacity(0.5) : Color.black.opacity(0.5))
+        .cornerRadius(10)
+        .padding()
     }
 }
 
-#Preview {
-    PrecipitationMapView()
-}

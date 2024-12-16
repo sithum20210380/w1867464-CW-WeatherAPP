@@ -8,8 +8,22 @@
 import SwiftUI
 
 struct CustomTabBar: View {
+    init() {
+            UITabBar.appearance().unselectedItemTintColor = UIColor.white
+        }
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        TabView {
+            ContentView()
+                .tabItem {
+                    Label("", systemImage: "map")
+                }
+
+            SearchScreen()
+                .tabItem {
+                    Label("", systemImage: "list.bullet")
+                }
+        }
+        .accentColor(.white)
     }
 }
 

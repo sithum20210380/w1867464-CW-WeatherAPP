@@ -11,7 +11,7 @@ import SwiftUI
 struct w1867464_CW_WeatherAPPApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            CustomTabBar()
         }
     }
 }

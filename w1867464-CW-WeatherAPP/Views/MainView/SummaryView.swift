@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct SummaryCard: View {
+struct SummaryView: View {
     let avgTemp: String
     let feelsLike: String
     var isDaytime: Bool
@@ -76,5 +76,5 @@ struct SummaryCard: View {
 }
 
 #Preview {
-    SummaryCard(avgTemp: "88°", feelsLike: "90°", isDaytime: true)
+    SummaryView(avgTemp: "88°", feelsLike: "90°", isDaytime: true)
 }

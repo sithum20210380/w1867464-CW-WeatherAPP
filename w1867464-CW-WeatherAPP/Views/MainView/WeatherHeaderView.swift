@@ -8,11 +8,29 @@
 import SwiftUI
 
 struct WeatherHeaderView: View {
+    let cityName: String
+    let temperature: String
+    let description: String
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            Text("My Location")
+                .foregroundColor(.white)
+            Text(cityName)
+                .font(.title)
+                .foregroundColor(.white)
+            Text(temperature)
+                .font(.system(size: 70))
+                .foregroundColor(.white)
+            Text(description)
+                .font(.headline)
+                .foregroundColor(.white)
+            HStack {
+                Text("H: 86°")
+                    .foregroundColor(.white)
+                Text("L: 82°")
+                    .foregroundColor(.white)
+            }
+        }
     }
-}
-
-#Preview {
-    WeatherHeaderView()
 }
