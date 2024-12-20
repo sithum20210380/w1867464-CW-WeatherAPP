@@ -30,6 +30,7 @@ struct WindView: View {
                             .fontWeight(.bold)
                             .opacity(0.6)
                     }
+                    Divider()
                     HStack{
                         Text("Gusts")
                             .fontWeight(.bold)
@@ -38,6 +39,7 @@ struct WindView: View {
                             .fontWeight(.bold)
                             .opacity(0.6)
                     }
+                    Divider()
                     HStack{
                         Text("Direction")
                             .fontWeight(.bold)

@@ -8,6 +8,10 @@
 import Foundation
 
 struct APIConfig {
-    static let baseURL = "https://api.openweathermap.org/data/2.5/weather"
+    static let weatherBaseURL = "https://api.openweathermap.org/data/2.5/weather"
+    static let geoCodeBaseURL = "https://api.openweathermap.org/data/2.5/find"
+    static let oneCallBaseURL = "https://api.openweathermap.org/data/3.0/onecall"
     static let apiKey = "f54fbbe77a3d042576ceabfbd3515665"
+    static let oneCallAPIKey = "298cde09e43927afd859f01173d795c5"
 }
+

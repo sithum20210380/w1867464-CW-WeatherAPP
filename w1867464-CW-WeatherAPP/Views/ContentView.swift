@@ -10,8 +10,11 @@ import AVKit
 import MapKit
 
 struct ContentView: View {
-    @StateObject private var viewModel = WeatherViewModel()
+    @EnvironmentObject var viewModel: WeatherViewModel
     @StateObject private var mapViewModel = MapViewModel()
+    
+    @State private var selectedCity = "Moratuwa"
+    @State private var showSearchView = false
     
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
@@ -22,46 +25,79 @@ struct ContentView: View {
         NavigationStack {
             GeometryReader { geometry in
                 ZStack {
-                    VideoBackgroundView(videoName: viewModel.isDaytime ? "night" : "clouds", videoType: "mp4")
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                        .edgesIgnoringSafeArea(.all)
-                        .overlay(viewModel.isDaytime ? Color.blue.opacity(0.5) : Color.white.opacity(0.1))
+                    if viewModel.isDaytime {
+                        VideoBackgroundView(videoName: "clouds", videoType: "mp4")
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .edgesIgnoringSafeArea(.all)
+                            .overlay(Color.blue.opacity(0.5))
+                    } else {
+                        VideoBackgroundView(videoName: "night", videoType: "mp4")
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .edgesIgnoringSafeArea(.all)
+                            .overlay(Color.white.opacity(0.1))
+                    }
                     
                     VStack {
-                        WeatherHeaderView(
-                            cityName: viewModel.cityName,
-                            temperature: viewModel.temperature,
-                            description: viewModel.description
-                        )
-                        
-                        ScrollView(.vertical, showsIndicators: false){
-                            DailyForecastSection(isDaytime: viewModel.isDaytime)
-                                .padding(.bottom, -25)
-                            TenDayForecastSection(isDaytime: viewModel.isDaytime)
-                                .padding(.bottom, -25)
-                            PrecipitationMapView(region: $region,isDaytime: viewModel.isDaytime)
-                                .padding(.bottom, -8)
-                            SummaryView(
-                                avgTemp: viewModel.averageTemp,
-                                feelsLike: viewModel.feelsLike,
-                                isDaytime: viewModel.isDaytime
+                        if viewModel.isLoading {
+                            SkeletonView()
+                        }else {
+                            WeatherHeaderView(
+                                cityName: viewModel.cityName,
+                                temperature: viewModel.temperature,
+                                description: viewModel.description
                             )
-                            .padding(.bottom, -8)
-                            WindView(
-                                windSpeed: viewModel.windSpeed,
-                                windDirection: viewModel.windDirection,
-                                windGust: viewModel.windGust,
-                                isDaytime: viewModel.isDaytime)
+                            ScrollView(.vertical, showsIndicators: false){
+                                DailyForecastSection(isDaytime: viewModel.isDaytime)
+                                    .padding(.bottom, -26)
+                                TenDayForecastSection(isDaytime: viewModel.isDaytime)
+                                    .padding(.bottom, -26)
+                                PrecipitationMapView(region: $region,isDaytime: viewModel.isDaytime)
+                                    .padding(.bottom, -9)
+                                SummaryView(
+                                    avgTemp: viewModel.averageTemp,
+                                    feelsLike: viewModel.feelsLike,
+                                    isDaytime: viewModel.isDaytime
+                                )
+                                .padding(.bottom, -9)
+                                WindView(
+                                    windSpeed: viewModel.windSpeed,
+                                    windDirection: viewModel.windDirection,
+                                    windGust: viewModel.windGust,
+                                    isDaytime: viewModel.isDaytime)
+                                .padding(.bottom, -9)
+                                UVSunsetView(
+                                    sunset: viewModel.sunset,
+                                    sunrise: viewModel.sunrise,
+                                    isDaytime: viewModel.isDaytime
+                                )
+                                .padding(.bottom, 6)
+                                PrecipVisibilityView(
+                                    visibility: viewModel.visibility,
+                                    isDaytime: viewModel.isDaytime
+                                )
+                                .padding(.bottom, -9)
+                                WaxingCrescent(
+                                    illumination: "10%",
+                                    moonset: "20:41",
+                                    nextFullMoon: "11 Days",
+                                    isDaytime: viewModel.isDaytime
+                                )
+                                .padding(.bottom, -9)
+                                HumidityPressureView(
+                                    humidity: viewModel.humidity,
+                                    pressure: viewModel.pressure,
+                                    isDaytime: viewModel.isDaytime
+                                )
+                            }
                         }
                         
                         Spacer()
                     }
-                    
                 }
             }
         }
         .onAppear {
-            viewModel.fetchWeather(for: "Moratuwa")
+            viewModel.fetchWeather(for: viewModel.cityName)
             mapViewModel.updateRegion(for: "Moratuwa")
         }
     }
@@ -69,5 +105,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(WeatherViewModel())
 }
 

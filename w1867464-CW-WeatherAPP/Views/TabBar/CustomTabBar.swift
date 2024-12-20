@@ -8,17 +8,21 @@
 import SwiftUI
 
 struct CustomTabBar: View {
+    @StateObject private var viewModel = WeatherViewModel()
+
     init() {
-            UITabBar.appearance().unselectedItemTintColor = UIColor.white
-        }
+        UITabBar.appearance().unselectedItemTintColor = UIColor.white
+    }
+
     var body: some View {
         TabView {
             ContentView()
+                .environmentObject(viewModel)
                 .tabItem {
                     Label("", systemImage: "map")
                 }
 
-            SearchScreen()
+            SearchScreen(viewModel: viewModel)
                 .tabItem {
                     Label("", systemImage: "list.bullet")
                 }
@@ -26,6 +30,7 @@ struct CustomTabBar: View {
         .accentColor(.white)
     }
 }
+
 
 #Preview {
     CustomTabBar()
