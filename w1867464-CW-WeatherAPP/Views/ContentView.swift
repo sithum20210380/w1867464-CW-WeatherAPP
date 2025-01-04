@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var selectedCity = "Moratuwa"
     @State private var showSearchView = false
     
+    
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
@@ -47,9 +48,9 @@ struct ContentView: View {
                                 description: viewModel.description
                             )
                             ScrollView(.vertical, showsIndicators: false){
-                                DailyForecastSection(isDaytime: viewModel.isDaytime)
+                                HourlyForecastSection(viewModel: viewModel, isDaytime: viewModel.isDaytime )
                                     .padding(.bottom, -26)
-                                TenDayForecastSection(isDaytime: viewModel.isDaytime)
+                                TenDayForecastSection(viewModel: viewModel, isDaytime: viewModel.isDaytime)
                                     .padding(.bottom, -26)
                                 PrecipitationMapView(region: $region,isDaytime: viewModel.isDaytime)
                                     .padding(.bottom, -9)
@@ -97,7 +98,7 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            viewModel.fetchWeather(for: viewModel.cityName)
+            viewModel.getCoordinatesForCity(viewModel.cityName)
             mapViewModel.updateRegion(for: "Moratuwa")
         }
     }
@@ -107,4 +108,3 @@ struct ContentView: View {
     ContentView()
         .environmentObject(WeatherViewModel())
 }
-

@@ -6,13 +6,32 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct FavoriteWeatherView: View {
+    let cityName: String
+    @ObservedObject var viewModel: WeatherViewModel
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack {
+            ContentView()
+                .environmentObject(viewModel)
+                .onAppear {
+                    fetchWeatherForCity()
+                }
+        }
+        
+    }
+    private func fetchWeatherForCity() {
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(cityName) { placemarks, error in
+            if let location = placemarks?.first?.location {
+                viewModel.getCoordinatesForCity(viewModel.cityName)
+            }
+        }
     }
 }
 
 #Preview {
-    FavoriteWeatherView()
+    FavoriteWeatherView(cityName: "Colombo", viewModel: WeatherViewModel())
 }

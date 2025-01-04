@@ -6,92 +6,177 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct SearchScreen: View {
     @State private var searchQuery: String = ""
     @ObservedObject var viewModel: WeatherViewModel
-    @State private var searchResults: [String] = []
+    @State private var searchResults: [CitySearchResult] = []
+    @State private var selectedCity: CitySearchResult?
+    @State private var showResult = false
+    @State private var selectedFavoriteCity: FavoriteCity?
+    @State private var showFavoritePreview = false
     @Environment(\.dismiss) private var dismiss
+    
+    struct CitySearchResult: Identifiable, Hashable {
+        let id = UUID()
+        let name: String
+        let lat: Double
+        let lon: Double
+        
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+        
+        static func == (lhs: CitySearchResult, rhs: CitySearchResult) -> Bool {
+            lhs.id == rhs.id
+        }
+    }
     
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading) {
-                Text("Search City")
-                    .foregroundStyle(.white)
-                    .font(.title)
-                    .fontWeight(.bold)
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.white)
-                        .padding(.leading, 10)
-                    
-                    TextField("Search for a city or airport", text: $searchQuery)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 5)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .onChange(of: searchQuery) { _ in
-                            performSearch()
-                        }
-                }
-                .background(Color(.systemGray5).opacity(0.2))
-                .cornerRadius(8)
+            ZStack {
+                Color.gray.ignoresSafeArea()
                 
-                // Search Results
-                ScrollView {
-                    VStack(spacing: 10) {
-                        ForEach(searchResults, id: \.self) { city in
-                            Button(action: {
-                                selectCity(city)
-                            }) {
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text(city)
-                                            .font(.headline)
-                                            .foregroundColor(.white)
-                                        
-                                        Text("Mostly Cloudy")
-                                            .font(.subheadline)
-                                            .foregroundColor(.white.opacity(0.6))
-                                    }
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Search City")
+                        .foregroundStyle(.white)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .padding(.top)
+                    
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.white)
+                            .padding(.leading, 10)
+                        
+                        TextField("Search for a city or airport", text: $searchQuery)
+                            .foregroundColor(.white)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 5)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .onChange(of: searchQuery) { _ in
+                                performSearch()
+                            }
+                    }
+                    .background(Color(.systemGray5).opacity(0.2))
+                    .cornerRadius(8)
+                    
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            if !viewModel.favoriteCities.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Favorites")
+                                        .foregroundStyle(.white)
+                                        .font(.headline)
                                     
-                                    Spacer()
-                                    
-                                    VStack {
-                                        Text("84°")
-                                            .font(.title)
-                                            .foregroundColor(.white)
-                                        
-                                        Text("H:88° L:75°")
-                                            .font(.footnote)
-                                            .foregroundColor(.white.opacity(0.6))
+                                    ForEach(viewModel.favoriteCities) { city in
+                                        Button(action: {
+                                            selectedFavoriteCity = city
+                                            viewModel.fetchWeather(latitude: city.latitude, longitude: city.longitude)
+                                            viewModel.cityName = city.name
+                                            showFavoritePreview = true
+                                        }) {
+                                            HStack {
+                                                Text(city.name)
+                                                    .foregroundColor(.white)
+                                                Spacer()
+                                                Button(action: {
+                                                    viewModel.removeFromFavorites(city.name)
+                                                }) {
+                                                    Image(systemName: "trash")
+                                                        .foregroundColor(.red)
+                                                }
+                                            }
+                                            .padding()
+                                            .background(Color(.systemGray6).opacity(0.3))
+                                            .cornerRadius(10)
+                                        }
                                     }
                                 }
-                                .padding()
-                                .background(Color(.systemGray6).opacity(0.3))
-                                .cornerRadius(10)
+                            }
+                            
+                            if !searchResults.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Search Results")
+                                        .foregroundStyle(.white)
+                                        .font(.headline)
+                                    
+                                    ForEach(searchResults) { city in
+                                        Button(action: {
+                                            selectedCity = city
+                                            viewModel.fetchWeather(latitude: city.lat, longitude: city.lon)
+                                            viewModel.cityName = city.name
+                                            showResult = true
+                                        }) {
+                                            HStack {
+                                                Text(city.name)
+                                                    .font(.headline)
+                                                    .foregroundColor(.white)
+                                                Spacer()
+                                                Button(action: {
+                                                    viewModel.addToFavorites(city.name)
+                                                }) {
+                                                    Image(systemName: "star")
+                                                        .foregroundColor(.yellow)
+                                                }
+                                            }
+                                            .padding()
+                                            .background(Color(.systemGray6).opacity(0.3))
+                                            .cornerRadius(10)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
+                .padding()
             }
-            .padding()
-            .background(Color.gray.edgesIgnoringSafeArea(.all))
+            .navigationBarHidden(true)
+        }
+        .sheet(isPresented: $showResult) {
+            if let city = selectedCity {
+                SearchResultView(city: city.name, viewModel: viewModel)
+            }
+        }
+        .sheet(isPresented: $showFavoritePreview) {
+            if let city = selectedFavoriteCity {
+                SearchResultView(city: city.name, viewModel: viewModel)
+            }
         }
     }
     
     private func performSearch() {
-        if !searchQuery.isEmpty {
-            searchResults = ["\(searchQuery)"]
-        } else {
+        guard !searchQuery.isEmpty else {
             searchResults = []
+            return
         }
-    }
-    
-    private func selectCity(_ city: String) {
-        viewModel.fetchWeather(for: city)
-        dismiss()
+        
+        // Use the geocoding API to get coordinates
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(searchQuery) { placemarks, error in
+            if let error = error {
+                print("Geocoding error: \(error)")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                searchResults = placemarks?.compactMap { placemark in
+                    guard let name = placemark.locality ?? placemark.name,
+                          let location = placemark.location else {
+                        return nil
+                    }
+                    
+                    return CitySearchResult(
+                        name: name,
+                        lat: location.coordinate.latitude,
+                        lon: location.coordinate.longitude
+                    )
+                } ?? []
+            }
+        }
     }
 }
 

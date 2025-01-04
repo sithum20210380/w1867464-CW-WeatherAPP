@@ -34,14 +34,14 @@ struct HourlyForecastSection: View {
     }
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading) {
             Text(viewModel.hourlyForecastSummary)
                 .foregroundColor(.white)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal)
             
             Divider()
-                .background(Color.white)
+                .background(Color.white.opacity(0.6))
                 .padding(.horizontal)
             
             ScrollView(.horizontal, showsIndicators: false) {
@@ -77,7 +77,7 @@ struct HourlyForecastView: View {
             
             Image(systemName: weatherIcon)
                 .symbolEffect(.breathe)
-                .font(.system(size: 30))
+                .font(.system(size: 25))
                 .foregroundColor(.white)
             
             Text(temp)

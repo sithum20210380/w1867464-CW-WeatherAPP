@@ -13,6 +13,11 @@ struct CitiesResponse: Codable {
     struct City: Codable {
         let name: String
         let country: String
+        let coord: Coordinates
+        
+        struct Coordinates: Codable {
+            let lat: Double
+            let lon: Double
+        }
     }
 }
-

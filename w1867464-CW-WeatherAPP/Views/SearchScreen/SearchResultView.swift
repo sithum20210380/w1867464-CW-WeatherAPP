@@ -8,11 +8,37 @@
 import SwiftUI
 
 struct SearchResultView: View {
+    let city: String
+    @ObservedObject var viewModel: WeatherViewModel
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack {
+            ContentView()
+                .environmentObject(viewModel)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(){
+                        dismiss()
+                    }label: {
+                        Text("Cancel")
+                    }
+                    .tint(.white)
+                }
+                ToolbarItem(placement: .topBarTrailing){
+                    Button(){
+                        dismiss()
+                        viewModel.addToFavorites(city)
+                    }label: {
+                        Text("Add")
+                    }
+                    .tint(.white)
+                }
+            }
+        }
     }
 }
 
 #Preview {
-    SearchResultView()
+    SearchResultView(city: "Colombo", viewModel: WeatherViewModel())
 }

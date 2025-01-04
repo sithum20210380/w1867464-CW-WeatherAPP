@@ -16,8 +16,8 @@ struct WaxingCrescent: View {
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
-                Image(systemName: "umbrella.fill")
-                Text("PRECIPITATION")
+                Image(systemName: "moonphase.waning.gibbous.inverse")
+                Text("WAXING CRESCENT")
             }
             .padding(.bottom,5)
             .opacity(0.6)
