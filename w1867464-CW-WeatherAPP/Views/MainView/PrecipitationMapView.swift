@@ -13,7 +13,7 @@ struct PrecipitationMapView: View {
     @ObservedObject var viewModel: WeatherViewModel
     var isDaytime: Bool
     @State private var region: MKCoordinateRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612), // Default to Colombo
+        center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
     
