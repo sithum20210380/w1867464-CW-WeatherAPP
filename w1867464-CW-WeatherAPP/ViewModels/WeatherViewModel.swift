@@ -5,15 +5,10 @@
 //  Created by Sithum Raveesha on 2024-12-12.
 //
 
-import Foundation
+import SwiftUI
 import CoreLocation
 
 class WeatherViewModel: ObservableObject {
-    @Published var cityName: String {
-        didSet {
-            UserDefaults.standard.set(cityName, forKey: "SelectedCity")
-        }
-    }
     
     @Published var temperature: String = "--°"
     @Published var averageTemp: String = "--°"
@@ -41,11 +36,28 @@ class WeatherViewModel: ObservableObject {
     @Published var forecastSummary: String = "Loading forecast..."
     @Published var hourlyForecastSummary: String = "Loading forecast..."
     
+    // Air Pollution Properties
+    @Published var airQualityIndex: String = "--"
+    @Published var coLevel: String = "--"
+    @Published var no2Level: String = "--"
+    @Published var o3Level: String = "--"
+    @Published var so2Level: String = "--"
+    @Published var pm25Level: String = "--"
+    @Published var pm10Level: String = "--"
+    
+    @Published var cityName: String {
+        didSet {
+            UserDefaults.standard.set(cityName, forKey: "SelectedCity")
+        }
+    }
+    
     @Published var favoriteCities: [FavoriteCity] = [] {
         didSet {
             saveFavorites()
         }
     }
+    
+    @AppStorage("FavoriteCitiesData") private var favoriteCitiesData: Data?
     
     private let geocoder = CLGeocoder()
     
@@ -68,19 +80,41 @@ class WeatherViewModel: ObservableObject {
     init() {
         cityName = UserDefaults.standard.string(forKey: "SelectedCity") ?? "Colombo"
         loadFavorites()
-        getCoordinatesForCity(cityName)
+        Task {
+            await getCoordinatesForCity(cityName)
+        }
     }
     
-    func getCoordinatesForCity(_ city: String) {
-        geocoder.geocodeAddressString(city) { [weak self] placemarks, error in
-            if let location = placemarks?.first?.location {
-                self?.fetchWeather(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+    func getCoordinatesForCity(_ city: String) async {
+        do {
+            let placemarks = try await geocodeCity(city)
+            if let location = placemarks.first?.location {
+                await fetchWeather(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+                await fetchAirPollutionData(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+            }
+        } catch {
+            print("Failed to get coordinates: \(error)")
+        }
+    }
+    
+    private func geocodeCity(_ city: String) async throws -> [CLPlacemark] {
+        return try await withCheckedThrowingContinuation { continuation in
+            geocoder.geocodeAddressString(city) { placemarks, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: placemarks ?? [])
+                }
             }
         }
     }
     
     func addToFavorites(_ cityName: String) {
-        // Use geocoder to get coordinates before adding to favorites
+        // Check if city already exists in favorites
+        guard !favoriteCities.contains(where: { $0.name == cityName }) else {
+            return
+        }
+        
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(cityName) { [weak self] placemarks, error in
             guard let self = self,
@@ -93,9 +127,7 @@ class WeatherViewModel: ObservableObject {
             )
             
             DispatchQueue.main.async {
-                if !self.favoriteCities.contains(where: { $0.name == cityName }) {
-                    self.favoriteCities.append(newCity)
-                }
+                self.favoriteCities.append(newCity)
             }
         }
     }
@@ -105,19 +137,26 @@ class WeatherViewModel: ObservableObject {
     }
     
     private func saveFavorites() {
-        if let encoded = try? JSONEncoder().encode(favoriteCities) {
-            UserDefaults.standard.set(encoded, forKey: "FavoriteCities")
+        do {
+            let encodedData = try JSONEncoder().encode(favoriteCities)
+            favoriteCitiesData = encodedData
+        } catch {
+            print("Error saving favorites: \(error)")
         }
     }
     
     private func loadFavorites() {
-        if let data = UserDefaults.standard.data(forKey: "FavoriteCities"),
-           let decoded = try? JSONDecoder().decode([FavoriteCity].self, from: data) {
-            favoriteCities = decoded
+        guard let data = favoriteCitiesData else { return }
+        
+        do {
+            favoriteCities = try JSONDecoder().decode([FavoriteCity].self, from: data)
+        } catch {
+            print("Error loading favorites: \(error)")
+            favoriteCities = []
         }
     }
     
-    func fetchWeather(latitude: Double, longitude: Double) {
+    func fetchWeather(latitude: Double, longitude: Double) async {
         self.isLoading = true
         let urlString = "\(APIConfig.oneCallBaseURL)?lat=\(latitude)&lon=\(longitude)&appid=\(APIConfig.oneCallAPIKey)&units=metric"
         
@@ -126,112 +165,102 @@ class WeatherViewModel: ObservableObject {
             return
         }
         
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let self = self else { return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decodedResponse = try JSONDecoder().decode(WeatherResponse.self, from: data)
             
-            if let data = data {
-                do {
-                    let decodedResponse = try JSONDecoder().decode(WeatherResponse.self, from: data)
-                    DispatchQueue.main.async {
-                        // Update current weather
-                        self.temperature = "\(Int(decodedResponse.current.temp))°"
-                        self.description = decodedResponse.current.weather.first?.description.capitalized ?? ""
-                        self.feelsLike = "\(Int(decodedResponse.current.feels_like))°"
-                        
-                        // Update daily temperatures
-                        if let today = decodedResponse.daily.first {
-                            self.highTemp = "H: \(Int(today.temp.max))°"
-                            self.lowTemp = "L: \(Int(today.temp.min))°"
-                            self.averageTemp = String(format: "+ %.1f°", (today.temp.max + today.temp.min) / 2)
-                        }
-                        
-                        // Update other metrics
-                        self.pressure = "\(decodedResponse.current.pressure)"
-                        self.humidity = "\(decodedResponse.current.humidity)"
-                        self.visibility = String(format: "%.0f km", Double(decodedResponse.current.visibility) / 1000)
-                        self.windSpeed = "\(decodedResponse.current.wind_speed)"
-                        if let gust = decodedResponse.current.wind_gust {
-                            self.windGust = "\(gust)"
-                        }
-                        self.windDirection = "\(decodedResponse.current.wind_deg)"
-                        
-                        // Update sun times
-                        self.sunrise = self.convertUnixTimeTo24Hour(decodedResponse.current.sunrise)
-                        self.sunset = self.convertUnixTimeTo24Hour(decodedResponse.current.sunset)
-                        
-                        // Update hourly forecasts (next 24 hours)
-                        self.hourlyForecasts = decodedResponse.hourly.prefix(24).map { hourly in
-                            HourlyForecast(
-                                date: Date(timeIntervalSince1970: hourly.dt),
-                                temp: hourly.temp,
-                                icon: hourly.weather.first?.icon ?? "cloud.fill"
-                            )
-                        }
-                        
-                        // Update daily forecasts
-                        self.dailyForecasts = decodedResponse.daily.prefix(10).map { daily in
-                            DailyForecast(
-                                date: Date(timeIntervalSince1970: daily.dt),
-                                minTemp: daily.temp.min,
-                                maxTemp: daily.temp.max,
-                                icon: daily.weather.first?.icon ?? "cloud.fill",
-                                precipitation: daily.pop * 100 // Convert to percentage
-                            )
-                        }
-                        
-                        // Update forecast summary
-                        if let todayForecast = decodedResponse.daily.first {
-                            self.forecastSummary = "\(todayForecast.summary) Wind gusts are up to \(Int(todayForecast.wind_gust ?? 0))km/h."
-                        }
-                        
-                        if let todayForecast = decodedResponse.daily.first {
-                                                    self.hourlyForecastSummary = todayForecast.summary
-                                                }
-                        
-                        // Determine if it's daytime
-                        if let icon = decodedResponse.current.weather.first?.icon {
-                            self.isDaytime = icon.contains("d")
-                        }
-                        
-                        self.isLoading = false
-                    }
-                } catch {
-                    print("Failed to decode JSON: \(error)")
-                    self.isLoading = false
-                }
+            DispatchQueue.main.async {
+                self.updateWeatherUI(with: decodedResponse)
+                self.isLoading = false
             }
-        }.resume()
+        } catch {
+            print("Failed to fetch weather: \(error)")
+            self.isLoading = false
+        }
     }
     
-    //    func searchCities(query: String, completion: @escaping ([String]) -> Void) {
-    //        guard !query.isEmpty else {
-    //            completion([])
-    //            return
-    //        }
-    //
-    //        guard let url = URL(string: "\(APIConfig.geoCodeBaseURL)?q=\(query)&appid=\(APIConfig.apiKey)&units=metric") else {
-    //            print("Invalid GeoCode URL")
-    //            completion([])
-    //            return
-    //        }
-    //
-    //        URLSession.shared.dataTask(with: url) { data, response, error in
-    //            if let data = data {
-    //                do {
-    //                    let decodedResponse = try JSONDecoder().decode(CitiesResponse.self, from: data)
-    //                    let cityNames = decodedResponse.list.compactMap { $0.name }
-    //                    DispatchQueue.main.async {
-    //                        completion(cityNames)
-    //                    }
-    //                } catch {
-    //                    print("Failed to decode city search data: \(error)")
-    //                    DispatchQueue.main.async {
-    //                        completion([])
-    //                    }
-    //                }
-    //            }
-    //        }.resume()
-    //    }
+    func fetchAirPollutionData(latitude: Double, longitude: Double) async {
+        let airPollutionURLString = "\(APIConfig.airPollutionBaseURL)?lat=\(latitude)&lon=\(longitude)&appid=\(APIConfig.oneCallAPIKey)&units=metric"
+        
+        guard let url = URL(string: airPollutionURLString) else {
+            print("Invalid Air Pollution URL")
+            return
+        }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let airPollutionResponse = try JSONDecoder().decode(AirPollutionResponse.self, from: data)
+            
+            DispatchQueue.main.async {
+                self.updateAirPollutionUI(with: airPollutionResponse)
+            }
+        } catch {
+            print("Failed to fetch air pollution data: \(error)")
+        }
+    }
+    
+    private func updateWeatherUI(with response: WeatherResponse) {
+        // Update current weather
+        self.temperature = "\(Int(response.current.temp))°"
+        self.description = response.current.weather.first?.description.capitalized ?? ""
+        self.feelsLike = "\(Int(response.current.feels_like))°"
+        
+        // Update daily temperatures
+        if let today = response.daily.first {
+            self.highTemp = "H: \(Int(today.temp.max))°"
+            self.lowTemp = "L: \(Int(today.temp.min))°"
+            self.averageTemp = String(format: "+ %.1f°", (today.temp.max + today.temp.min) / 2)
+        }
+        
+        // Update other metrics
+        self.pressure = "\(response.current.pressure)"
+        self.humidity = "\(response.current.humidity)"
+        self.visibility = String(format: "%.0f km", Double(response.current.visibility) / 1000)
+        self.windSpeed = "\(response.current.wind_speed)"
+        if let gust = response.current.wind_gust {
+            self.windGust = "\(gust)"
+        }
+        self.windDirection = "\(response.current.wind_deg)"
+        
+        // Update sun times
+        self.sunrise = self.convertUnixTimeTo24Hour(response.current.sunrise)
+        self.sunset = self.convertUnixTimeTo24Hour(response.current.sunset)
+        
+        // Update hourly and daily forecasts
+        self.hourlyForecasts = response.hourly.prefix(24).map {
+            HourlyForecast(
+                date: Date(timeIntervalSince1970: $0.dt),
+                temp: $0.temp,
+                icon: $0.weather.first?.icon ?? "cloud.fill"
+            )
+        }
+        self.dailyForecasts = response.daily.prefix(10).map {
+            DailyForecast(
+                date: Date(timeIntervalSince1970: $0.dt),
+                minTemp: $0.temp.min,
+                maxTemp: $0.temp.max,
+                icon: $0.weather.first?.icon ?? "cloud.fill",
+                precipitation: $0.pop * 100 // Convert to percentage
+            )
+        }
+        
+        // Determine if it's daytime
+        if let icon = response.current.weather.first?.icon {
+            self.isDaytime = icon.contains("d")
+        }
+    }
+    
+    private func updateAirPollutionUI(with response: AirPollutionResponse) {
+        if let pollution = response.list.first {
+            self.airQualityIndex = "\(pollution.main.aqi)"
+            self.coLevel = "\(pollution.components.co)"
+            self.no2Level = "\(pollution.components.no2)"
+            self.o3Level = "\(pollution.components.o3)"
+            self.so2Level = "\(pollution.components.so2)"
+            self.pm25Level = "\(pollution.components.pm2_5)"
+            self.pm10Level = "\(pollution.components.pm10)"
+        }
+    }
     
     private func convertUnixTimeTo24Hour(_ time: TimeInterval) -> String {
         let date = Date(timeIntervalSince1970: time)

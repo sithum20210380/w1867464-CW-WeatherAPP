@@ -6,32 +6,104 @@
 //
 
 import SwiftUI
-import CoreLocation
+import MapKit
 
 struct FavoriteWeatherView: View {
-    let cityName: String
-    @ObservedObject var viewModel: WeatherViewModel
+    @EnvironmentObject var viewModel: WeatherViewModel
+    @StateObject private var mapViewModel = MapViewModel()
+    @StateObject private var connectivityManager = ConnectivityManager()
+
+    //@State private var selectedCity = "Colombo" // Default favorite city
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    )
     
     var body: some View {
         NavigationStack {
-            ContentView()
-                .environmentObject(viewModel)
-                .onAppear {
-                    fetchWeatherForCity()
+            ZStack {
+                if connectivityManager.hasError {
+                    ErrorView(message: connectivityManager.errorMessage)
+                } else {
+                    GeometryReader { geometry in
+                        ZStack {
+                            if viewModel.isDaytime {
+                                VideoBackgroundView(videoName: "clouds", videoType: "mp4")
+                                    .frame(width: geometry.size.width, height: geometry.size.height)
+                                    .edgesIgnoringSafeArea(.all)
+                                    .overlay(Color.blue.opacity(0.5))
+                            } else {
+                                VideoBackgroundView(videoName: "night", videoType: "mp4")
+                                    .frame(width: geometry.size.width, height: geometry.size.height)
+                                    .edgesIgnoringSafeArea(.all)
+                                    .overlay(Color.white.opacity(0.1))
+                            }
+                            
+                            VStack {
+                                if viewModel.isLoading {
+                                    SkeletonView()
+                                } else {
+                                    WeatherHeaderView(
+                                        cityName: viewModel.cityName,
+                                        temperature: viewModel.temperature,
+                                        description: viewModel.description
+                                    )
+                                    ScrollView(.vertical, showsIndicators: false) {
+                                        HourlyForecastSection(viewModel: viewModel, isDaytime: viewModel.isDaytime)
+                                            .padding(.bottom, -26)
+                                        TenDayForecastSection(viewModel: viewModel, isDaytime: viewModel.isDaytime)
+                                            .padding(.bottom, -26)
+                                        PrecipitationMapView(region: $region, isDaytime: viewModel.isDaytime)
+                                            .padding(.bottom, -9)
+                                        SummaryView(
+                                            avgTemp: viewModel.averageTemp,
+                                            feelsLike: viewModel.feelsLike,
+                                            isDaytime: viewModel.isDaytime
+                                        )
+                                        .padding(.bottom, -9)
+                                        WindView(
+                                            windSpeed: viewModel.windSpeed,
+                                            windDirection: viewModel.windDirection,
+                                            windGust: viewModel.windGust,
+                                            isDaytime: viewModel.isDaytime)
+                                        .padding(.bottom, -9)
+                                        UVSunsetView(
+                                            sunset: viewModel.sunset,
+                                            sunrise: viewModel.sunrise,
+                                            isDaytime: viewModel.isDaytime
+                                        )
+                                        .padding(.bottom, 6)
+                                        PrecipVisibilityView(
+                                            visibility: viewModel.visibility,
+                                            isDaytime: viewModel.isDaytime
+                                        )
+                                        .padding(.bottom, -9)
+                                        WaxingCrescent(
+                                            illumination: "10%",
+                                            moonset: "20:41",
+                                            nextFullMoon: "11 Days",
+                                            isDaytime: viewModel.isDaytime
+                                        )
+                                        .padding(.bottom, -9)
+                                        HumidityPressureView(
+                                            humidity: viewModel.humidity,
+                                            pressure: viewModel.pressure,
+                                            isDaytime: viewModel.isDaytime
+                                        )
+                                    }
+                                }
+                                Spacer()
+                            }
+                        }
+                    }
                 }
-        }
-        
-    }
-    private func fetchWeatherForCity() {
-        let geocoder = CLGeocoder()
-        geocoder.geocodeAddressString(cityName) { placemarks, error in
-            if let location = placemarks?.first?.location {
-                viewModel.getCoordinatesForCity(viewModel.cityName)
             }
         }
     }
 }
 
 #Preview {
-    FavoriteWeatherView(cityName: "Colombo", viewModel: WeatherViewModel())
+    FavoriteWeatherView()
+        .environmentObject(WeatherViewModel())
 }
+

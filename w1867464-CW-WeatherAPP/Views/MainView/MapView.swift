@@ -14,17 +14,23 @@ struct MapView: View {
         center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
         span: MKCoordinateSpan(latitudeDelta: 45, longitudeDelta: 45)
     )
+    @State private var selectedCity: FavoriteCity?
+    @State private var showFavoriteWeather = false
     
     var body: some View {
-        Map {
-            ForEach(viewModel.favoriteCities) { city in
-                Marker(city.name, coordinate: city.coordinate)
-                    .tint(.red)
+        ZStack {
+            Color.black.ignoresSafeArea()
+            Map {
+                ForEach(viewModel.favoriteCities) { city in
+                    Marker(city.name, coordinate: city.coordinate)
+                        .tint(.red)
+                }
             }
-        }
-        .onAppear {
-            if let firstCity = viewModel.favoriteCities.first {
-                region.center = firstCity.coordinate
+            .mapStyle(.imagery)
+            .onAppear {
+                if let firstCity = viewModel.favoriteCities.first {
+                    region.center = firstCity.coordinate
+                }
             }
         }
     }
