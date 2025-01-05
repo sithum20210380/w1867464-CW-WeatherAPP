@@ -14,14 +14,14 @@ struct AirQualitySection: View {
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
-                Image(systemName: "thermometer.low")
+                Image(systemName: "wind")
                 Text("Air Quality")
             }.opacity(0.6)
             .foregroundColor(.white)
             
             Divider()
                 .background(Color.white.opacity(0.6))
-                .padding(.horizontal)
+                .padding(.bottom, 10)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 20) {
