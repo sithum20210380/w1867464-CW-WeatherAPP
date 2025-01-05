@@ -210,6 +210,7 @@ class WeatherViewModel: ObservableObject {
             self.highTemp = "H: \(Int(today.temp.max))°"
             self.lowTemp = "L: \(Int(today.temp.min))°"
             self.averageTemp = String(format: "+ %.1f°", (today.temp.max + today.temp.min) / 2)
+            self.hourlyForecastSummary = today.summary
         }
         
         // Update other metrics
