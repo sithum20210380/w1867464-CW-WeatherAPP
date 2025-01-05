@@ -56,7 +56,7 @@ struct ContentView: View {
                                             .padding(.bottom, -26)
                                         TenDayForecastSection(viewModel: viewModel, isDaytime: viewModel.isDaytime)
                                             .padding(.bottom, -26)
-                                        PrecipitationMapView(region: $region, isDaytime: viewModel.isDaytime)
+                                        PrecipitationMapView(viewModel: viewModel, isDaytime: viewModel.isDaytime)
                                             .padding(.bottom, -9)
                                         SummaryView(
                                             avgTemp: viewModel.averageTemp,
