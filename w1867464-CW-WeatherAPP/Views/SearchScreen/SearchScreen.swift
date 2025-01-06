@@ -144,7 +144,6 @@ struct SearchScreen: View {
             return
         }
         
-        // Use the geocoding API to get coordinates
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(searchQuery) { placemarks, error in
             if let error = error {
@@ -170,6 +169,7 @@ struct SearchScreen: View {
     }
 }
 
+// Search Result Row Component
 struct SearchResultRow: View {
     let city: SearchScreen.CitySearchResult
     @ObservedObject var viewModel: WeatherViewModel
@@ -280,7 +280,6 @@ struct FavoriteWeatherCard: View {
         formatter.dateFormat = "HH:mm"
         self.currentTime = formatter.string(from: Date())
         
-        // Update time every minute
         Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
             self.currentTime = formatter.string(from: Date())
         }

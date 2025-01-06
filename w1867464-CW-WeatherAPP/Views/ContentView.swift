@@ -114,31 +114,6 @@ struct ContentView: View {
     }
 }
 
-struct ErrorView: View {
-    let message: String
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 50))
-                .foregroundColor(.yellow)
-            
-            Text(message)
-                .multilineTextAlignment(.center)
-                .padding()
-            
-            if message.contains("Settings") {
-                Button("Open Settings") {
-                    if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(settingsUrl)
-                    }
-                }
-                .buttonStyle(.bordered)
-            }
-        }
-        .padding()
-    }
-}
 #Preview {
     ContentView()
         .environmentObject(WeatherViewModel())

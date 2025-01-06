@@ -41,11 +41,9 @@ class ConnectivityManager: NSObject, ObservableObject, CLLocationManagerDelegate
     private func setupLocationServices() {
         locationManager.delegate = self
         
-        // Instead of checking immediately, request authorization first
         locationManager.requestWhenInUseAuthorization()
     }
 
-    // Add this delegate method to handle the location services enabled status
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -58,7 +56,6 @@ class ConnectivityManager: NSObject, ObservableObject, CLLocationManagerDelegate
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        // Move the status check to a background queue
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let isEnabled = CLLocationManager.locationServicesEnabled()
             

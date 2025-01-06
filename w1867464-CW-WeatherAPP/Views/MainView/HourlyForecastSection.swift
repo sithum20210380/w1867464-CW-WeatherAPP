@@ -18,7 +18,6 @@ struct HourlyForecastSection: View {
         }
     
     private func getWeatherIcon(from apiIcon: String) -> String {
-        // Convert API weather icon codes to SF Symbols
         switch apiIcon {
         case "01d", "01n": return "sun.max.fill"
         case "02d", "02n": return "cloud.sun.fill"

@@ -13,7 +13,7 @@ struct TenDayForecastSection: View {
     
     private func getDayName(from date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"  // Full day name
+        formatter.dateFormat = "EEEE"
         let dayName = formatter.string(from: date)
         
         let calendar = Calendar.current
@@ -26,7 +26,6 @@ struct TenDayForecastSection: View {
     }
     
     private func getWeatherIcon(from apiIcon: String) -> String {
-        // Convert API weather icon codes to SF Symbols
         switch apiIcon {
         case "01d", "01n": return "sun.max.fill"
         case "02d", "02n": return "cloud.sun.fill"
@@ -75,6 +74,7 @@ struct TenDayForecastSection: View {
     }
 }
 
+// DailyForecastRowView component
 struct DailyForecastRowView: View {
     var day: String
     var weatherIcon: String

@@ -32,6 +32,7 @@ enum TabItem: Int {
     }
 }
 
+// CustomPageIndicator component
 struct CustomPageIndicator: View {
     let numberOfPages: Int
     let currentPage: Int
@@ -50,6 +51,7 @@ struct CustomPageIndicator: View {
     }
 }
 
+// FavoritesView component
 struct FavoritesView: View {
     @ObservedObject var viewModel: WeatherViewModel
     @State private var currentPage: Int = 0
@@ -112,7 +114,7 @@ struct FavoritesView: View {
     }
 }
 
-
+// CustomTabBar component
 struct CustomTabBar: View {
     @StateObject private var viewModel = WeatherViewModel()
     @State private var selectedTab: TabItem = .weather

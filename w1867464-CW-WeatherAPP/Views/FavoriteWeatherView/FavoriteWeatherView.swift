@@ -13,7 +13,6 @@ struct FavoriteWeatherView: View {
     @StateObject private var mapViewModel = MapViewModel()
     @StateObject private var connectivityManager = ConnectivityManager()
 
-    //@State private var selectedCity = "Colombo" // Default favorite city
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 6.9271, longitude: 79.8612),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
