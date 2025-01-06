@@ -10,6 +10,7 @@ import SwiftUI
 struct UVSunsetView: View {
     let sunset: String
     let sunrise: String
+    let uvIndex: String
     var isDaytime: Bool
     
     var body: some View {
@@ -21,7 +22,7 @@ struct UVSunsetView: View {
                         Text("UV INDEX")
                     }.opacity(0.6)
                         .padding(.bottom, 5)
-                    Text("0")
+                    Text(uvIndex)
                         .font(.system(size: 30))
                         .fontWeight(.medium)
                     Text("Low")
@@ -65,5 +66,5 @@ struct UVSunsetView: View {
 }
 
 #Preview {
-    UVSunsetView(sunset: "17:53", sunrise: "06:08", isDaytime: false)
+    UVSunsetView(sunset: "17:53", sunrise: "06:08",uvIndex: "10", isDaytime: false)
 }

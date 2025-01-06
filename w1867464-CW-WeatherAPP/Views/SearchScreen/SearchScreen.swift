@@ -56,7 +56,7 @@ struct SearchScreen: View {
                             .padding(.horizontal, 5)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
-                            .onChange(of: searchQuery) { _ in
+                            .onChange(of: searchQuery) {
                                 performSearch()
                             }
                     }
@@ -240,7 +240,7 @@ struct FavoriteWeatherCard: View {
         }
         .foregroundColor(.white)
         .padding()
-        .background(viewModel.isDaytime ? Color(.systemBlue).opacity(0.3) : Color(.black).opacity(0.5))
+        .background(isDaytime ? Color(.systemBlue).opacity(0.3) : Color(.black).opacity(0.5))
         .cornerRadius(15)
         .onAppear {
             fetchWeatherForCard()
@@ -260,6 +260,9 @@ struct FavoriteWeatherCard: View {
                 let response = try JSONDecoder().decode(WeatherResponse.self, from: data)
                 DispatchQueue.main.async {
                     self.temperature = "\(Int(response.current.temp))°"
+                    if let icon = response.current.weather.first?.icon {
+                        self.isDaytime = icon.contains("d")
+                    }
                     if let today = response.daily.first {
                         self.highTemp = "H:\(Int(today.temp.max))°"
                         self.lowTemp = "L:\(Int(today.temp.min))°"

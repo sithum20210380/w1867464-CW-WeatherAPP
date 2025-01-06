@@ -28,8 +28,8 @@ struct PrecipitationMapView: View {
             Map(coordinateRegion: $region, interactionModes: .zoom)
                 .frame(height: 200)
                 .cornerRadius(10)
-                .onChange(of: viewModel.cityName) { newCity in
-                    updateMapRegion(for: newCity)
+                .onChange(of: viewModel.cityName) {
+                    updateMapRegion(for: viewModel.cityName)
                 }
         }
         .foregroundColor(.white)

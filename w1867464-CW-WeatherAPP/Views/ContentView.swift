@@ -73,6 +73,7 @@ struct ContentView: View {
                                         UVSunsetView(
                                             sunset: viewModel.sunset,
                                             sunrise: viewModel.sunrise,
+                                            uvIndex: viewModel.uvIndex,
                                             isDaytime: viewModel.isDaytime
                                         )
                                         .padding(.bottom, 6)
@@ -106,9 +107,9 @@ struct ContentView: View {
         }
         .onAppear {
             Task {
-                   await viewModel.getCoordinatesForCity(viewModel.cityName)
-                   await mapViewModel.updateRegion(for: "Moratuwa")
-               }
+                await viewModel.getCoordinatesForCity(viewModel.cityName)
+                mapViewModel.updateRegion(for: "Moratuwa")
+            }
         }
     }
 }

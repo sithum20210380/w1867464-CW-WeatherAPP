@@ -70,6 +70,7 @@ struct FavoriteWeatherView: View {
                                         UVSunsetView(
                                             sunset: viewModel.sunset,
                                             sunrise: viewModel.sunrise,
+                                            uvIndex: viewModel.uvIndex,
                                             isDaytime: viewModel.isDaytime
                                         )
                                         .padding(.bottom, 6)

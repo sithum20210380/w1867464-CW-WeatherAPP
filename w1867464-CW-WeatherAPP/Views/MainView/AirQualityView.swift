@@ -15,7 +15,7 @@ struct AirQualitySection: View {
         VStack(alignment: .leading) {
             HStack {
                 Image(systemName: "wind")
-                Text("Air Quality")
+                Text("AIR QUALITY")
             }.opacity(0.6)
             .foregroundColor(.white)
             

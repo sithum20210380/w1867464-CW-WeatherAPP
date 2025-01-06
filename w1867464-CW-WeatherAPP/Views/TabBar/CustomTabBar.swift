@@ -91,7 +91,7 @@ struct FavoritesView: View {
         .onAppear {
             setupCityWeatherViewModels()
         }
-        .onChange(of: viewModel.favoriteCities) { _ in
+        .onChange(of: viewModel.favoriteCities) {
             print("Favorite cities: \(viewModel.favoriteCities)")
             print("CityWeatherViewModels: \(cityWeatherViewModels.map { $0.cityName })")
             setupCityWeatherViewModels()

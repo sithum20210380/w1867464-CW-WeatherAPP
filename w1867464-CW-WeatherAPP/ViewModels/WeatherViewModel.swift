@@ -22,6 +22,7 @@ class WeatherViewModel: ObservableObject {
     @Published var windGust: String = "--"
     @Published var sunrise: String = "--:--"
     @Published var sunset: String = "--:--"
+    @Published var uvIndex: String = "--"
     @Published var visibility: String = "--"
     @Published var pressure: String = "--"
     @Published var humidity: String = "--"
@@ -157,11 +158,15 @@ class WeatherViewModel: ObservableObject {
     }
     
     func fetchWeather(latitude: Double, longitude: Double) async {
-        self.isLoading = true
+        DispatchQueue.main.async {
+                self.isLoading = true
+            }
         let urlString = "\(APIConfig.oneCallBaseURL)?lat=\(latitude)&lon=\(longitude)&appid=\(APIConfig.oneCallAPIKey)&units=metric"
         
         guard let url = URL(string: urlString) else {
-            print("Invalid URL")
+            DispatchQueue.main.async {
+                        print("Invalid URL")
+                    }
             return
         }
         
@@ -226,6 +231,9 @@ class WeatherViewModel: ObservableObject {
         // Update sun times
         self.sunrise = self.convertUnixTimeTo24Hour(response.current.sunrise)
         self.sunset = self.convertUnixTimeTo24Hour(response.current.sunset)
+        
+        // Update UV Index
+        self.uvIndex = "\(Int(response.current.uvi))"
         
         // Update hourly and daily forecasts
         self.hourlyForecasts = response.hourly.prefix(24).map {
