@@ -16,6 +16,8 @@ struct SearchScreen: View {
     @State private var showResult = false
     @State private var selectedFavoriteCity: FavoriteCity?
     @State private var showFavoritePreview = false
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     @Environment(\.dismiss) private var dismiss
     
     struct CitySearchResult: Identifiable, Hashable {
@@ -126,6 +128,9 @@ struct SearchScreen: View {
             }
             .navigationBarHidden(true)
         }
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text("Invalid Search"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
         .sheet(isPresented: $showResult) {
             if let city = selectedCity {
                 SearchResultView(city: city.name, viewModel: viewModel)
@@ -144,10 +149,19 @@ struct SearchScreen: View {
             return
         }
         
+        if searchQuery.rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) == nil {
+            alertMessage = "Invalid input. Please enter a valid city name."
+            showAlert = true
+            return
+        }
+        
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(searchQuery) { placemarks, error in
             if let error = error {
-                print("Geocoding error: \(error)")
+                DispatchQueue.main.async {
+                    alertMessage = "Error: \(error.localizedDescription)"
+                    showAlert = true
+                }
                 return
             }
             
@@ -164,6 +178,10 @@ struct SearchScreen: View {
                         lon: location.coordinate.longitude
                     )
                 } ?? []
+                if searchResults.isEmpty {
+                    alertMessage = "No matching locations found. Please try again."
+                    showAlert = true
+                }
             }
         }
     }
